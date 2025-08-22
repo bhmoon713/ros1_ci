@@ -16,7 +16,7 @@ ENV CATKIN_WS=/catkin_ws
 RUN mkdir -p ${CATKIN_WS}/src
 WORKDIR ${CATKIN_WS}
 
-# Copy your local TortoiseBot stack from the build context
+# Copy your local TortoiseBot stack from the build context..
 # (this folder sits next to ros1_ci/ in your screenshot)
 COPY tortoisebot/ ./src/tortoisebot/
 
