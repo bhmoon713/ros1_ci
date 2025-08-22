@@ -20,7 +20,7 @@ WORKDIR ${CATKIN_WS}
 # (this folder sits next to ros1_ci/ in your screenshot)
 COPY tortoisebot/ ./src/tortoisebot/
 
-# Clone your waypoints package from GitHub
+# Clone your waypoints package from GitHub......
 ARG WAYPOINTS_REF=main
 RUN git clone --depth 1 --branch "${WAYPOINTS_REF}" \
     https://github.com/bhmoon713/tortoisebot_waypoints.git ./src/tortoisebot_waypoints
