@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y \
 RUN rosdep init 2>/dev/null || true
 RUN rosdep update
 
+# Link python3 to python otherwise ROS scripts fail when using the OSRF contianer
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
 ENV CATKIN_WS=/catkin_ws
 RUN mkdir -p ${CATKIN_WS}/src
 WORKDIR ${CATKIN_WS}
