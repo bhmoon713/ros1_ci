@@ -26,9 +26,10 @@ RUN git clone --depth 1 --branch "${WAYPOINTS_REF}" \
     https://github.com/bhmoon713/tortoisebot_waypoints.git ./src/tortoisebot_waypoints
 
 # Resolve deps & build
-RUN source /opt/ros/noetic/setup.bash \
+RUN source /opt/ros/noetic/setup.bash \ 
  && rosdep install --from-paths src --ignore-src -r -y \
- && catkin_make
+ && catkin_make \
+ && source devel/setup.bash
 
 ENV DISPLAY=:99
 ENV GAZEBO_MODEL_PATH=${CATKIN_WS}/src:${GAZEBO_MODEL_PATH}
