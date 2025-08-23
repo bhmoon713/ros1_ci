@@ -1,12 +1,22 @@
+# Install Docker, enable user permission and restart session
+```
+sudo apt-get update
+sudo apt-get install -y docker.io docker-compose
+sudo service docker start
+sudo usermod -aG docker $USER
+newgrp docker
+sudo service docker restart
+sudo systemctl start docker
+sudo systemctl enable docker
+```
 # Install and Start Jenkins
+```
 user:~/webpage_ws$ bash start_jenkins.sh
+```
+This will download and execute lastest version of Jenkins
 
-This 
-cd ~
-JENKINS_FILE="$HOME/jenkins.war"
-if [ ! -f "$JENKINS_FILE" ]; then
-    wget https://updates.jenkins.io/download/war/latest/jenkins.war -O "$JENKINS_FILE"
-fi
+
+
 
 # Goto this page to view Jenkins
 Jenkins URL: 
@@ -23,18 +33,6 @@ echo "if [ ! -f /home/user/run_jenkins.sh ]; then
    wget -nc https://raw.githubusercontent.com/TheConstructAi/jenkins_demo/master/run_jenkins.sh && sleep 10s && bash run_jenkins.sh
 fi" >> ~/.bashrc
 
-# Install docker in CLI
-sudo apt-get update
-sudo apt-get install -y docker.io docker-compose
-sudo service docker start
-sudo usermod -aG docker $USER
-newgrp docker
-sudo service docker restart
-sudo systemctl start docker
-sudo systemctl enable docker
-sudo usermod -aG docker $USER
-newgrp docker
-docker ps
 
 VPS
 Docker
