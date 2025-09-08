@@ -1,0 +1,61 @@
+FROM osrf/ros:humble-desktop
+
+# Change the default shell to Bash
+SHELL [ "/bin/bash" , "-c" ]
+
+# Install Gazebo 11 and other dependencies
+RUN apt-get update && apt-get install -y \
+  ros-humble-gazebo-ros-pkgs \
+  ros-humble-gazebo-ros2-control \
+  ros-humble-ros2-control \
+  ros-humble-ros2-controllers \
+  ros-humble-joint-state-publisher \
+  ros-humble-robot-state-publisher \
+  ros-humble-robot-localization \
+  ros-humble-xacro \
+  ros-humble-tf2-ros \
+  ros-humble-tf2-tools \
+  ros-humble-ros2-control \
+  ros-humble-ros2-controllers \
+  ros-humble-rmw-cyclonedds-cpp \
+  python3-colcon-common-extensions \
+  && rm -rf /var/lib/apt/lists/*
+
+# Create workspace inside the image
+WORKDIR /ros2_ws/
+
+# Create workspace and download simulation repository
+RUN source /opt/ros/humble/setup.bash \
+ && mkdir -p /ros2_ws/src \
+ && cd /ros2_ws/src 
+
+
+# Copy packages INTO the image (paths are relative to the BUILD CONTEXT)
+# Build context will be ~/ros2_ws/src so 'fastbot/...' exists.
+COPY fastbot/fastbot_description/ src/fastbot_description/
+COPY fastbot/fastbot_gazebo/      src/fastbot_gazebo/
+
+# OMG... I spent several data to figure out this... Path does not work so force to copy
+COPY fastbot/fastbot_description/ /usr/share/gazebo-11/models/fastbot_description
+
+# Build the Colcon workspace and ensure it's sourced
+RUN source /opt/ros/humble/setup.bash \
+ && cd /ros2_ws \
+ && colcon build
+RUN echo "source /ros2_ws/install/setup.bash" >> ~/.bashrc
+
+# Set environment variables
+ENV ROS_DOMAIN_ID=1
+ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+ENV GAZEBO_MODEL_PATH=${GAZEBO_MODEL_PATH}:/ros2_ws/src/
+# ENV GAZEBO_MODEL_PATH=/usr/share/gazebo-11/models:$GAZEBO_MODEL_PATH
+
+# ENV GAZEBO_MODEL_PATH=/ros2_ws/src/fastbot_description/models:/ros2_ws/src/fastbot_description/onshape:/usr/share/gazebo-11/models:$GAZEBO_MODEL_PATH
+# ENV GAZEBO_RESOURCE_PATH=/ros2_ws/src/fastbot_gazebo:$GAZEBO_RESOURCE_PATH
+# ENV GAZEBO_MODEL_PATH=/usr/share/gazebo-11/models:/usr/share/gazebo-11/models:/usr/share/gazebo-11/models:/usr/share/gazebo-9/models:/usr/share/gazebo/models_robox:$GAZEBO_MODEL_PATH
+# ENV GAZEBO_RESOURCE_PATH=/usr/share/gazebo-11:/usr/share/gazebo-11:/usr/share/gazebo-11:/usr/share/gazebo:$GAZEBO_RESOURCE_PATH
+
+# Always source Humble + your overlay when the container runs
+# ENTRYPOINT ["/bin/bash","-lc"]
+# CMD ["source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash && ros2 launch fastbot_gazebo one_fastbot_room.launch.py"]
+ENTRYPOINT ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && source /ros2_ws/install/setup.bash && ros2 launch fastbot_gazebo one_fastbot_room.launch.py"]

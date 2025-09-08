@@ -1,41 +1,32 @@
 FROM osrf/ros:noetic-desktop-full-focal
 SHELL ["/bin/bash", "-lc"]
+ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y \
-    python3-rosdep python3-catkin-tools \
-    ros-noetic-rostest ros-noetic-roslint \
-    ros-noetic-gazebo-ros-pkgs ros-noetic-gazebo-ros-control \
-    xvfb x11-apps wget git \
- && rm -rf /var/lib/apt/lists/*
-
-# rosdep (safe if already inited on base image)
-RUN rosdep init 2>/dev/null || true
-RUN rosdep update
-
-# Link python3 to python otherwise ROS scripts fail when using the OSRF contianer
-RUN ln -s /usr/bin/python3 /usr/bin/python
-
-ENV CATKIN_WS=/catkin_ws
-RUN mkdir -p ${CATKIN_WS}/src
+# Consistent workspace path
+ENV CATKIN_WS=/root/simulation_ws
 WORKDIR ${CATKIN_WS}
 
-# Copy your local TortoiseBot stack from the build context..
-# (this folder sits next to ros1_ci/ in your screenshot)
-COPY tortoisebot/ ./src/tortoisebot/
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3-rosdep build-essential git && \
+    rm -rf /var/lib/apt/lists/*
 
-# Clone your waypoints package from GitHub
-ARG WAYPOINTS_REF=main
-RUN git clone --depth 1 --branch "${WAYPOINTS_REF}" \
-    https://github.com/bhmoon713/tortoisebot_waypoints.git ./src/tortoisebot_waypoints
+RUN rosdep init || true && rosdep update
 
-# Resolve deps & build
-RUN source /opt/ros/noetic/setup.bash \ 
- && rosdep install --from-paths src --ignore-src -r -y \
- && catkin_make \
- && source devel/setup.bash
+# Create ws; sources will be bind-mounted at runtime
+RUN mkdir -p ${CATKIN_WS}/src
 
-ENV DISPLAY=:99
-ENV GAZEBO_MODEL_PATH=${CATKIN_WS}/src:${GAZEBO_MODEL_PATH}
-ENV GAZEBO_RESOURCE_PATH=${CATKIN_WS}/src:${GAZEBO_RESOURCE_PATH}
+RUN source /opt/ros/noetic/setup.bash && \
+    rosdep install --from-paths ${CATKIN_WS}/src --ignore-src -r -y || true && \
+    cd ${CATKIN_WS} && catkin_make || true
 
-CMD ["bash"]
+RUN echo "source /opt/ros/noetic/setup.bash" >> /root/.bashrc && \
+    echo "if [ -f ${CATKIN_WS}/devel/setup.bash ]; then source ${CATKIN_WS}/devel/setup.bash; fi" >> /root/.bashrc
+
+ENV GAZEBO_MODEL_PATH=${CATKIN_WS}/src/tortoisebot_gazebo/models
+
+# COPY relative to context=simulation_ws
+COPY src/ros1_ci/ros_entrypoint.sh /ros_entrypoint.sh
+RUN chmod +x /ros_entrypoint.sh
+
+ENTRYPOINT ["/ros_entrypoint.sh"]
+CMD ["roslaunch", "tortoisebot_gazebo", "tortoisebot_playground.launch"]

@@ -1,0 +1,25 @@
+version: "3"
+
+services:
+  tortoisebot-ros1-gazebo:
+    build:
+      context: ${HOME}/simulation_ws
+      dockerfile: src/ros1_ci/Dockerfile
+    image: bhmoon418/bhmoon713-cp24:tortoisebot-ros1-gazebo
+    container_name: tortoisebot-ros1-gazebo
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - CATKIN_WS=/root/simulation_ws
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      # - ${XAUTHORITY:-${HOME}/.Xauthority}:/root/.Xauthority:ro
+      - ${HOME}/simulation_ws/src:/root/simulation_ws/src:rw
+    command: ["roslaunch", "tortoisebot_gazebo", "tortoisebot_playground.launch"]
+    cap_add:
+      - NET_ADMIN
+    networks:
+      - fastbot_net
+
+networks:
+  fastbot_net:
